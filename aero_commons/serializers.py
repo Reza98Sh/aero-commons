@@ -1,22 +1,13 @@
 from rest_framework import serializers
-from .models import CustomUser, UserInfo
+from .models import CustomUser
 
 
-class UserInfoSerializer(serializers.ModelSerializer):
-    """
-    Serializer for the UserInfo model.
-    """
-
-    class Meta:
-        model = UserInfo
-        exclude = ("user",)
 
 
 class ManagerSerializer(serializers.ModelSerializer):
     """
     Serializer for the UserInfo model.
     """
-    info = UserInfoSerializer(read_only=True)
 
     class Meta:
         model = CustomUser
@@ -42,7 +33,6 @@ class CustomUserSerializer(serializers.ModelSerializer):
     )
     direct_manager = ManagerSerializer()
 
-    info = UserInfoSerializer(read_only=True)
 
     class Meta:
         model = CustomUser

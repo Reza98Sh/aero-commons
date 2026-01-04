@@ -12,6 +12,10 @@ logger = logging.getLogger(__name__)
 class LDAPSyncMixin:
     """
     Provides LDAP synchronization logic for CustomUser.
+    
+    This mixin handles synchronization of user data from an LDAP server
+    to the Django CustomUser model. All profile fields are now directly
+    on the CustomUser model (UserInfo has been merged into CustomUser).
     """
 
     LDAP_PAGE_SIZE = 1000
@@ -36,7 +40,12 @@ class LDAPSyncMixin:
     # -------------------------
     @classmethod
     def get_ldap_connection(cls):
-        """Create and bind LDAP connection."""
+        """
+        Create and bind LDAP connection using settings from Django settings.
+        
+        Returns:
+            Connection: Bound LDAP connection object
+        """
         server = Server(settings.LDAP_HOST, get_info=ALL)
         return Connection(
             server,
@@ -50,7 +59,16 @@ class LDAPSyncMixin:
     # -------------------------
     @classmethod
     def fetch_ldap_entries(cls, conn, progress_cb=None):
-        """Fetch LDAP entries using pagination."""
+        """
+        Fetch LDAP entries using pagination to handle large directories.
+        
+        Args:
+            conn: LDAP connection object
+            progress_cb: Optional callback function for progress updates
+            
+        Returns:
+            list: List of LDAP entry objects
+        """
         entries = []
         page_size = cls.LDAP_PAGE_SIZE
 
@@ -94,7 +112,16 @@ class LDAPSyncMixin:
     def extract_entry_data(cls, entry):
         """
         Convert LDAP entry to normalized dict.
+        
         Handles empty values properly to avoid unique constraint violations.
+        All user data (including profile info) is now consolidated into
+        a single user_data dict since UserInfo has been merged into CustomUser.
+        
+        Args:
+            entry: LDAP entry object
+            
+        Returns:
+            dict: Normalized data dictionary or None if entry is invalid
         """
         if not hasattr(entry, "sAMAccountName"):
             return None
@@ -117,7 +144,6 @@ class LDAPSyncMixin:
             except Exception:
                 pass
 
-        # Helper function to safely extract string value
         def safe_str(attr_name, default="", allow_none=False):
             """
             Safely extract string value from LDAP entry.
@@ -152,44 +178,48 @@ class LDAPSyncMixin:
             
             return str_value
 
-        # Helper for nullable unique fields (like personnel_code)
         def safe_unique_str(attr_name):
             """
             For unique fields, return None instead of empty string.
             Multiple NULLs are allowed in unique columns, but multiple empty strings are not.
+            
+            Args:
+                attr_name: Name of the LDAP attribute
+                
+            Returns:
+                String value or None
             """
             return safe_str(attr_name, default=None, allow_none=True)
 
-        # Build user data - IMPORTANT: first_name and last_name MUST have string defaults
+        # Build email with fallback
         email = safe_str("mail", default="")
         if not email:
-            email = f"{username}@mapnaaero.com"
+            email_domain = getattr(settings, "CUSTOM_USERS_EMAIL_DOMAIN", "mapnaaero.com")
+            email = f"{username}@{email_domain}"
 
+        # Build consolidated user data (includes former UserInfo fields)
         user_data = {
+            # Authentication and LDAP fields
             "email": email,
-            "first_name": safe_str("givenName", default=""),  # Empty string, NOT None
-            "last_name": safe_str("sn", default=""),          # Empty string, NOT None
+            "first_name": safe_str("givenName", default=""),
+            "last_name": safe_str("sn", default=""),
             "use_ldap": True,
             "ldap_id": ldap_id,
-        }
-
-        # Build info data - personnel_code is unique, so use safe_unique_str
-        info_data = {
+            "cn": safe_str("cn", default="", allow_none=True),
+            
+            # Profile fields (formerly in UserInfo)
             "phone": safe_str("telephoneNumber", default=""),
             "personnel_code": safe_unique_str("postalCode"),  # Can be None (unique field)
         }
 
         return {
             "username": username,
-            "cn": safe_str("cn", default="", allow_none=True),
-            "manager_dn": safe_str("manager", default="", allow_none=True),
             "user_data": user_data,
-            "info_data": info_data,
+            "manager_dn": safe_str("manager", default="", allow_none=True),
             "position_title": safe_str("title", default="", allow_none=True),
             "department_name": safe_str("department", default="", allow_none=True),
             "thumbnail": thumbnail,
         }
-
 
     # -------------------------
     # SYNC SINGLE USER
@@ -198,23 +228,27 @@ class LDAPSyncMixin:
     def sync_single_user(cls, record, dry_run=False):
         """
         Create or update one user with proper handling of unique fields.
+        
+        Since UserInfo is merged into CustomUser, all fields are written
+        directly to the CustomUser model.
         """
-        from aero_commons.models import CustomUser, UserInfo, Department, Position
+        from aero_commons.models import CustomUser, Department, Position
 
         if dry_run:
             return None
 
         with transaction.atomic():
+            # -------------------------
             # Create or update user
+            # -------------------------
             user, created = CustomUser.objects.update_or_create(
                 username=record["username"],
                 defaults=record["user_data"],
             )
 
-            user.cn = record["cn"]
-            user.save()
-
+            # -------------------------
             # Department & Position
+            # -------------------------
             if record["position_title"]:
                 dept = None
                 if record["department_name"]:
@@ -229,45 +263,25 @@ class LDAPSyncMixin:
                 
                 if user.position != position:
                     user.position = position
-                    user.save()
 
-            # Handle UserInfo with special care for unique personnel_code
-            info_data = record["info_data"].copy()
-            personnel_code = info_data.get("personnel_code")
-            
-            # If personnel_code is not None and not empty, check for conflicts
-            if personnel_code:
-                # Check if another user already has this personnel_code
-                existing_info = UserInfo.objects.filter(
-                    personnel_code=personnel_code
-                ).exclude(user=user).first()
-                
-                if existing_info:
-                    # Another user has this code, log warning and set to None
-                    logger.warning(
-                        f"personnel_code '{personnel_code}' already exists for user "
-                        f"'{existing_info.user.username}', skipping for '{user.username}'"
-                    )
-                    info_data["personnel_code"] = None
-
-            # Now safely update or create UserInfo
-            info, _ = UserInfo.objects.update_or_create(
-                user=user,
-                defaults=info_data,
-            )
-
-            # Thumbnail
+            # -------------------------
+            # Handle thumbnail
+            # -------------------------
             if record.get("thumbnail"):
                 try:
-                    if info.thumbnail:
-                        info.thumbnail.delete(save=False)
-                    info.thumbnail.save(
+                    if user.thumbnail:
+                        user.thumbnail.delete(save=False)
+                    user.thumbnail.save(
                         f"{user.username}.jpg",
                         ContentFile(record["thumbnail"]),
-                        save=True,
+                        save=False,
                     )
                 except Exception as e:
-                    logger.error(f"Error saving thumbnail for {user.username}: {e}")
+                    logger.error(
+                        f"Error saving thumbnail for {user.username}: {e}"
+                    )
+
+            user.save()
 
         return created
 
@@ -278,6 +292,8 @@ class LDAPSyncMixin:
     def sync_from_ldap(cls, dry_run=False, callback=None):
         """
         Public API for LDAP sync.
+        
+        Returns statistics about created and updated users.
         """
         created = updated = 0
         manager_map = {}
@@ -314,19 +330,30 @@ class LDAPSyncMixin:
     # -------------------------
     @classmethod
     def _link_managers(cls, manager_map, dry_run):
+        """
+        Link users to their direct managers based on LDAP manager DN.
+        """
         from aero_commons.models import CustomUser
 
+        if dry_run:
+            return
+
         for username, manager_dn in manager_map.items():
-            if not manager_dn or dry_run:
+            if not manager_dn:
                 continue
 
             try:
                 manager_cn = manager_dn.split(",")[0].split("=")[1]
                 user = CustomUser.objects.get(username=username)
-                manager = CustomUser.objects.filter(cn__iexact=manager_cn).first()
+                manager = CustomUser.objects.filter(
+                    cn__iexact=manager_cn
+                ).first()
 
                 if manager and user.direct_manager != manager:
                     user.direct_manager = manager
                     user.save()
             except Exception:
-                pass
+                # Fail silently but log for debugging
+                logger.exception(
+                    f"Failed to link manager for user '{username}'"
+                )
