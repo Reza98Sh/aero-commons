@@ -1,7 +1,5 @@
 from rest_framework import serializers
-from .models import CustomUser
-
-
+from .models import CustomUser, Department, Position
 
 
 class ManagerSerializer(serializers.ModelSerializer):
@@ -17,7 +15,6 @@ class ManagerSerializer(serializers.ModelSerializer):
             "email",
             "first_name",
             "last_name",
-            "info",
         )
 
 
@@ -31,8 +28,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
     department = serializers.CharField(
         source="position.department.name", read_only=True
     )
-    direct_manager = ManagerSerializer()
-
+    direct_manager = ManagerSerializer(read_only=True)
 
     class Meta:
         model = CustomUser
@@ -44,10 +40,39 @@ class CustomUserSerializer(serializers.ModelSerializer):
             "last_name",
             "is_active",
             "ldap_id",
-            "use_ldap",
+            # Organization Info
             "cn",
             "direct_manager",
             "department",
             "position",
-            "info",
+            # Personal Info
+            "thumbnail",
+            "identify_code",
+            "last_degree",
+            "address",
+            "phone",
+            "birth_date",
+            "personnel_code",
         ]
+        read_only_fields = [
+            "cn",
+            "email",
+            "phone",
+            "username",
+            "thumbnail",
+            "personnel_code",
+        ]
+
+
+class DepartmentSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Department
+        fields = "__all__"
+
+
+class PositionSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Position
+        fields = "__all__"

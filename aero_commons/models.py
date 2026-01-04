@@ -1,15 +1,11 @@
-"""
-Custom User Models for Django.
-Includes Department, Position, and CustomUser with MPTT support.
-All user profile information is now consolidated into CustomUser.
-"""
-import uuid
+
 
 from django.db import models
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser, UserManager
 from mptt.models import MPTTModel, TreeForeignKey
 from mptt.managers import TreeManager
+
 from aero_commons.mixins import LDAPSyncMixin
 
 
@@ -99,32 +95,6 @@ class CustomUserManager(TreeManager, UserManager):
 class CustomUser(LDAPSyncMixin, AbstractUser, MPTTModel):
     """
     Custom user model extending Django's AbstractUser with MPTT support.
-    
-    Features:
-        - LDAP authentication support
-        - Organizational hierarchy (direct manager relationship)
-        - Position and department associations
-        - Automatic email generation
-        - Complete user profile information (merged from UserInfo)
-    
-    Attributes:
-        # LDAP-related fields
-        ldap_id: UUID from LDAP server (optional)
-        use_ldap: Flag indicating if user authenticates via LDAP
-        cn: Common Name from LDAP
-        
-        # Organizational fields
-        position: Foreign key to user's position
-        direct_manager: Self-referential foreign key for org hierarchy
-        
-        # Profile fields (previously in UserInfo)
-        thumbnail: Profile picture
-        identify_code: National or organizational ID
-        last_degree: Highest academic degree
-        address: Mailing address
-        phone: Contact phone number
-        birth_date: Date of birth
-        personnel_code: Unique personnel/employee code
     """
     
     # --------------------------
