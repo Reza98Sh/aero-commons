@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Department, Position, CustomUser, UserInfo
+from .models import Department, Position, CustomUser
 from django.contrib import admin, messages
 
 from django.contrib.auth.admin import UserAdmin
@@ -23,15 +23,6 @@ class PositionAdmin(admin.ModelAdmin):
     search_fields = ['title_en', 'title_en']
 
 
-class UserInfoInline(admin.StackedInline):
-    """
-    Inline admin for UserInfo to show within CustomUser admin.
-    """
-    model = UserInfo
-    can_delete = False
-    verbose_name_plural = 'User Information'
-    fk_name = 'user'
-
 
 
 from django_mptt_admin.admin import DjangoMpttAdmin
@@ -43,7 +34,6 @@ class CustomUserAdmin(DjangoMpttAdmin, UserAdmin):
     Admin interface for CustomUser model with MPTT tree support.
     """
     
-    inlines = [UserInfoInline]
     list_per_page = 100
     
     # Filters in the sidebar
@@ -136,23 +126,3 @@ class CustomUserAdmin(DjangoMpttAdmin, UserAdmin):
 
 
 
-@admin.register(UserInfo)
-class UserInfoAdmin(admin.ModelAdmin):
-    """
-    Admin interface for UserInfo model.
-    """
-    list_display = ['user',   'personnel_code', 'phone']
-    search_fields = [ 'personnel_code', 'identify_code', 'user__username']
-    list_filter = ['last_degree']
-    
-    fieldsets = (
-        ('Personal Information', {
-            'fields': ('user',  'identify_code', 'birth_date')
-        }),
-        ('Contact Information', {
-            'fields': ('phone', 'address')
-        }),
-        ('Professional Information', {
-            'fields': ('personnel_code', 'last_degree')
-        }),
-    )
