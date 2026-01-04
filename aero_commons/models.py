@@ -9,11 +9,8 @@ from django.conf import settings
 from django.contrib.auth.models import AbstractUser, UserManager
 from mptt.models import MPTTModel, TreeForeignKey
 from mptt.managers import TreeManager
-from django.db import transaction
-from django.core.files.base import ContentFile
 from django.conf import settings
-from ldap3 import Server, Connection, ALL, SUBTREE
-
+from aero_commons.mixins import LDAPSyncMixin
 
 
 class Department(models.Model):
@@ -99,7 +96,7 @@ class CustomUserManager(TreeManager, UserManager):
         return super().get_queryset()
 
 
-class CustomUser(AbstractUser, MPTTModel):
+class CustomUser(LDAPSyncMixin,AbstractUser, MPTTModel):
     """
     Custom user model extending Django's AbstractUser with MPTT support.
     
@@ -201,161 +198,6 @@ class CustomUser(AbstractUser, MPTTModel):
     def __str__(self):
         return self.username
 
-    
-    @classmethod
-    def sync_from_ldap(cls, dry_run=False):
-        """
-        Synchronize users from LDAP into database.
-        Can be safely executed from Django Admin.
-        """
-
-        created_count = 0
-        updated_count = 0
-        linked_count = 0
-        user_manager_map = {}
-
-        server = Server(settings.LDAP_HOST, get_info=ALL)
-        conn = Connection(
-            server,
-            user=settings.LDAP_ADMIN_USER,
-            password=settings.LDAP_ADMIN_PASSWORD,
-            auto_bind=True,
-        )
-
-        page_size = 1000
-        search_filter = "(objectCategory=Person)"
-
-        attributes = [
-            "sAMAccountName",
-            "mail",
-            "givenName",
-            "sn",
-            "objectGUID",
-            "telephoneNumber",
-            "postalCode",
-            "title",
-            "department",
-            "manager",
-            "cn",
-            "thumbnailPhoto",
-        ]
-
-        conn.search(
-            settings.LDAP_BASE_DN,
-            search_filter,
-            SUBTREE,
-            attributes=attributes,
-            paged_size=page_size,
-        )
-
-        entries = list(conn.entries)
-
-        controls = conn.result.get("controls", {})
-        while "1.2.840.113556.1.4.319" in controls:
-            cookie = controls["1.2.840.113556.1.4.319"]["value"]["cookie"]
-            if not cookie:
-                break
-
-            conn.search(
-                settings.LDAP_BASE_DN,
-                search_filter,
-                SUBTREE,
-                attributes=attributes,
-                paged_size=page_size,
-                paged_cookie=cookie,
-            )
-            entries.extend(conn.entries)
-            controls = conn.result.get("controls", {})
-
-        for entry in entries:
-            if not hasattr(entry, "sAMAccountName"):
-                continue
-
-            username = str(entry.sAMAccountName)
-            user_manager_map[username] = str(entry.manager) if hasattr(entry, "manager") else None
-
-            ldap_uuid = None
-            if hasattr(entry, "objectGUID") and entry.objectGUID:
-                try:
-                    ldap_uuid = uuid.UUID(str(entry.objectGUID))
-                except ValueError:
-                    pass
-
-            if dry_run:
-                continue
-
-            with transaction.atomic():
-                user, created = cls.objects.update_or_create(
-                    username=username,
-                    defaults={
-                        "email": str(entry.mail) if entry.mail else f"{username}@mapnaaero.com",
-                        "first_name": str(entry.givenName) if entry.givenName else "",
-                        "last_name": str(entry.sn) if entry.sn else "",
-                        "use_ldap": True,
-                        "ldap_id": ldap_uuid,
-                        "cn": str(entry.cn) if entry.cn else None,
-                    },
-                )
-
-                if created:
-                    created_count += 1
-                else:
-                    updated_count += 1
-
-                department = None
-                if hasattr(entry, "department") and entry.department:
-                    department, _ = Department.objects.get_or_create(name=str(entry.department))
-
-                if hasattr(entry, "title") and entry.title:
-                    position, _ = Position.objects.get_or_create(
-                        title_en=str(entry.title),
-                        defaults={"department": department},
-                    )
-                    user.position = position
-                    user.save()
-
-                info, _ = UserInfo.objects.update_or_create(
-                    user=user,
-                    defaults={
-                        "phone": str(entry.telephoneNumber) if entry.telephoneNumber else "",
-                        "personnel_code": str(entry.postalCode) if entry.postalCode else None,
-                    },
-                )
-
-                if hasattr(entry, "thumbnailPhoto") and entry.thumbnailPhoto:
-                    photo = entry.thumbnailPhoto.value
-                    if photo:
-                        info.thumbnail.save(
-                            f"{username}.jpg",
-                            ContentFile(photo),
-                            save=True,
-                        )
-
-        conn.unbind()
-
-        # Link managers
-        for username, manager_dn in user_manager_map.items():
-            if not manager_dn or dry_run:
-                continue
-
-            try:
-                manager_cn = manager_dn.split(",")[0].split("=")[1]
-                employee = cls.objects.get(username=username)
-                manager = cls.objects.filter(cn__iexact=manager_cn).first()
-
-                if manager and manager != employee:
-                    employee.direct_manager = manager
-                    employee.save()
-                    linked_count += 1
-            except Exception:
-                continue
-
-        return {
-            "created": created_count,
-            "updated": updated_count,
-            "linked": linked_count,
-        }
-        
 
 
 class UserInfo(models.Model):
