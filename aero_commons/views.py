@@ -19,7 +19,7 @@ class UserListAPIView(generics.ListAPIView):
         Return all users.
         """
         return CustomUser.objects.select_related(
-            "position", "position__department", "info"
+            "position", "position__department"
         ).all()
 
 
