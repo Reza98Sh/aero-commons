@@ -15,10 +15,15 @@ authors = [
 ]
 
 dependencies = [
-    "Django>=4.0",
-    "ldap3>=2.9",
-    "django-mptt>=0.14",
-    "Pillow>=9.0",
+    "django>=4.2",
+    "django-filter>=25.2",
+    "django-mptt>=0.18.0",
+    "django-mptt-admin>=2.9.0",
+    "djangorestframework>=3.16.1",
+    "djangorestframework-simplejwt[crypto]>=5.5.1",
+    "ldap3>=2.9.1",
+    "pillow>=12.1.0",
+    "pycryptodome>=3.23.0",
 ]
 
 
