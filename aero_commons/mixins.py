@@ -60,65 +60,87 @@ class LDAPSyncMixin:
     @classmethod
     def fetch_ldap_entries(cls, conn, progress_cb=None):
         """
-        Fetch LDAP entries using pagination to handle large directories.
+        Fetch LDAP entries from both active and inactive OUs using pagination.
         
         Args:
             conn: LDAP connection object
             progress_cb: Optional callback function for progress updates
             
         Returns:
-            list: List of LDAP entry objects
+            list: List of tuples (entry, is_active) where is_active indicates 
+                if the entry came from active or inactive OU
         """
         entries = []
         page_size = cls.LDAP_PAGE_SIZE
-
-        conn.search(
-            search_base=settings.LDAP_BASE_DN,
-            search_filter="(objectCategory=Person)",
-            search_scope=SUBTREE,
-            attributes=cls.LDAP_ATTRIBUTES,
-            paged_size=page_size,
-        )
-
-        entries.extend(conn.entries or [])
-
-        controls = conn.result.get("controls", {})
-        while "1.2.840.113556.1.4.319" in controls:
-            cookie = controls["1.2.840.113556.1.4.319"]["value"]["cookie"]
-            if not cookie:
-                break
-
+        
+        # Define search bases - active and inactive users
+        search_bases = [
+            (settings.LDAP_BASE_DN, True),  # Active users
+        ]
+        
+        # Add inactive users DN if configured
+        inactive_dn = getattr(settings, 'LDAP_INACTIVE_USERS_DN', None)
+        if inactive_dn:
+            search_bases.append((inactive_dn, False))  # Inactive users
+        
+        # Fetch from each search base
+        for search_base, is_active in search_bases:
             if progress_cb:
-                progress_cb(f"Fetching next LDAP page... ({len(entries)})")
-
+                status = "active" if is_active else "inactive"
+                progress_cb(f"Fetching {status} users from {search_base}...")
+            
+            # Initial search
             conn.search(
-                search_base=settings.LDAP_BASE_DN,
+                search_base=search_base,
                 search_filter="(objectCategory=Person)",
                 search_scope=SUBTREE,
                 attributes=cls.LDAP_ATTRIBUTES,
                 paged_size=page_size,
-                paged_cookie=cookie,
             )
-
-            entries.extend(conn.entries or [])
+            
+            # Add entries with their active status
+            for entry in (conn.entries or []):
+                entries.append((entry, is_active))
+            
+            # Handle pagination
             controls = conn.result.get("controls", {})
-
+            while "1.2.840.113556.1.4.319" in controls:
+                cookie = controls["1.2.840.113556.1.4.319"]["value"]["cookie"]
+                if not cookie:
+                    break
+                
+                if progress_cb:
+                    status = "active" if is_active else "inactive"
+                    progress_cb(f"Fetching next page of {status} users... ({len(entries)})")
+                
+                conn.search(
+                    search_base=search_base,
+                    search_filter="(objectCategory=Person)",
+                    search_scope=SUBTREE,
+                    attributes=cls.LDAP_ATTRIBUTES,
+                    paged_size=page_size,
+                    paged_cookie=cookie,
+                )
+                
+                # Add entries with their active status
+                for entry in (conn.entries or []):
+                    entries.append((entry, is_active))
+                
+                controls = conn.result.get("controls", {})
+        
         return entries
 
     # -------------------------
     # EXTRACT LDAP RECORD
     # -------------------------
     @classmethod
-    def extract_entry_data(cls, entry):
+    def extract_entry_data(cls, entry, is_active=True):
         """
         Convert LDAP entry to normalized dict.
         
-        Handles empty values properly to avoid unique constraint violations.
-        All user data (including profile info) is now consolidated into
-        a single user_data dict since UserInfo has been merged into CustomUser.
-        
         Args:
             entry: LDAP entry object
+            is_active: Boolean indicating if user is from active or inactive OU
             
         Returns:
             dict: Normalized data dictionary or None if entry is invalid
@@ -145,50 +167,27 @@ class LDAPSyncMixin:
                 pass
 
         def safe_str(attr_name, default="", allow_none=False):
-            """
-            Safely extract string value from LDAP entry.
-            
-            Args:
-                attr_name: Name of the LDAP attribute
-                default: Default value if attribute is missing or empty
-                allow_none: If True and value is empty, return None instead of default
-            
-            Returns:
-                String value, default value, or None based on parameters
-            """
+            """Safely extract string value from LDAP entry."""
             if not hasattr(entry, attr_name):
                 return None if allow_none else default
             
             value = getattr(entry, attr_name)
             
-            # Handle None
             if value is None:
                 return None if allow_none else default
             
-            # Handle empty list (LDAP often returns [] for missing values)
             if isinstance(value, (list, tuple)) and len(value) == 0:
                 return None if allow_none else default
             
-            # Convert to string
             str_value = str(value).strip()
             
-            # Handle string representations of empty values
             if str_value in ("", "[]", "None"):
                 return None if allow_none else default
             
             return str_value
 
         def safe_unique_str(attr_name):
-            """
-            For unique fields, return None instead of empty string.
-            Multiple NULLs are allowed in unique columns, but multiple empty strings are not.
-            
-            Args:
-                attr_name: Name of the LDAP attribute
-                
-            Returns:
-                String value or None
-            """
+            """For unique fields, return None instead of empty string."""
             return safe_str(attr_name, default=None, allow_none=True)
 
         # Build email with fallback
@@ -197,7 +196,7 @@ class LDAPSyncMixin:
             email_domain = getattr(settings, "CUSTOM_USERS_EMAIL_DOMAIN", "mapnaaero.com")
             email = f"{username}@{email_domain}"
 
-        # Build consolidated user data (includes former UserInfo fields)
+        # Build consolidated user data
         user_data = {
             # Authentication and LDAP fields
             "email": email,
@@ -206,10 +205,11 @@ class LDAPSyncMixin:
             "use_ldap": True,
             "ldap_id": ldap_id,
             "cn": safe_str("cn", default="", allow_none=True),
+            "is_active": is_active,  
             
-            # Profile fields (formerly in UserInfo)
+            # Profile fields
             "phone": safe_str("telephoneNumber", default=""),
-            "personnel_code": safe_unique_str("postalCode"),  # Can be None (unique field)
+            "personnel_code": safe_unique_str("postalCode"),
         }
 
         return {
@@ -220,6 +220,7 @@ class LDAPSyncMixin:
             "department_name": safe_str("department", default="", allow_none=True),
             "thumbnail": thumbnail,
         }
+
 
     # -------------------------
     # SYNC SINGLE USER
@@ -293,17 +294,20 @@ class LDAPSyncMixin:
         """
         Public API for LDAP sync.
         
-        Returns statistics about created and updated users.
+        Returns statistics about created and updated users from both active 
+        and inactive OUs.
         """
         created = updated = 0
         manager_map = {}
 
         conn = cls.get_ldap_connection()
         try:
+            # Fetch entries from both active and inactive OUs
             entries = cls.fetch_ldap_entries(conn, callback)
 
-            for entry in entries:
-                record = cls.extract_entry_data(entry)
+            for entry, is_active in entries:
+                # Extract entry data with active status
+                record = cls.extract_entry_data(entry, is_active)
                 if not record:
                     continue
 
@@ -324,7 +328,6 @@ class LDAPSyncMixin:
             "updated": updated,
             "total": len(entries),
         }
-
     # -------------------------
     # LINK MANAGERS
     # -------------------------

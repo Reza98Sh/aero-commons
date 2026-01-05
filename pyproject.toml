@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "aero-commons"
-version = "0.2.3"
+version = "0.2.4"
 description = "Reusable Django app for custom user management with LDAP support and common utilities for Aero organization."
 readme = "readme.md"
 license = {text = "MIT"}
