@@ -23,6 +23,18 @@ class UserListAPIView(generics.ListAPIView):
         ).all()
 
 
+class UserMeView(generics.RetrieveAPIView):
+    serializer_class = CustomUserSerializer
+    queryset = CustomUser.objects.all()
+
+    def get_object(self):
+        return self.request.user
+
+    def get_queryset(self):
+        query = CustomUser.objects.all()
+        return query
+
+
 class UserDetailAPIView(generics.RetrieveUpdateAPIView):
     """
     API View to list all users with their full profile, position, and department details.
