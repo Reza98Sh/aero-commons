@@ -24,7 +24,7 @@ urlpatterns = [
     path("token/", TokenObtainPairView.as_view(), name="api-token-obtain-pair"),
     path("token/refresh/", TokenRefreshView.as_view(), name="api-token-refresh"),
     path("", UserListAPIView.as_view(), name="user-list-full"),
-    path("me", UserMeView.as_view(), name="user-me"),
+    path("me/", UserMeView.as_view(), name="user-me"),
     path("<int:pk>/", UserDetailAPIView.as_view(), name="user-list-full"),
     path("sync/", sync_from_ldap_view, name="ldap-sync"),
 ]

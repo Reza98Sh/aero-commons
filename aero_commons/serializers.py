@@ -39,6 +39,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
             "first_name",
             "last_name",
             "is_active",
+            "is_staff",
             "ldap_id",
             # Organization Info
             "cn",

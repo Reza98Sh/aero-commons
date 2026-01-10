@@ -213,7 +213,7 @@ class LDAPSyncMixin:
         }
 
         return {
-            "username": username,
+            "username": username.lower(),
             "user_data": user_data,
             "manager_dn": safe_str("manager", default="", allow_none=True),
             "position_title": safe_str("title", default="", allow_none=True),
