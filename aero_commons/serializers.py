@@ -37,7 +37,9 @@ class CustomUserSerializer(serializers.ModelSerializer):
             "username",
             "email",
             "first_name",
+            "first_name_fa"
             "last_name",
+            "last_name_fa",
             "is_active",
             "is_staff",
             "ldap_id",
@@ -60,6 +62,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
             "email",
             "phone",
             "username",
+            "is_staff",
             "thumbnail",
             "personnel_code",
         ]

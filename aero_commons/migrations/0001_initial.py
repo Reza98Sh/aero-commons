@@ -73,7 +73,7 @@ class Migration(migrations.Migration):
                 ('rght', models.PositiveIntegerField(editable=False)),
                 ('tree_id', models.PositiveIntegerField(db_index=True, editable=False)),
                 ('level', models.PositiveIntegerField(editable=False)),
-                ('direct_manager', mptt.fields.TreeForeignKey(blank=True, help_text='Select the direct manager/supervisor for this user', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='subordinates', to=settings.AUTH_USER_MODEL, verbose_name='Direct Manager')),
+                ('direct_manager', mptt.fields.TreeForeignKey(blank=True, help_text='Select the direct manager/supervisor for this user', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='subordinates', to='commons.CustomUser', verbose_name='Direct Manager')),
                 ('groups', models.ManyToManyField(blank=True, help_text='The groups this user belongs to. A user will get all permissions granted to each of their groups.', related_name='user_set', related_query_name='user', to='auth.group', verbose_name='groups')),
                 ('user_permissions', models.ManyToManyField(blank=True, help_text='Specific permissions for this user.', related_name='user_set', related_query_name='user', to='auth.permission', verbose_name='user permissions')),
                 ('position', models.ForeignKey(blank=True, help_text='Select the organizational position for this user', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='users', to='commons.position', verbose_name='Position')),

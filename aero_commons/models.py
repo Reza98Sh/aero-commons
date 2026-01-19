@@ -1,5 +1,3 @@
-
-
 from django.db import models
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser, UserManager
@@ -12,11 +10,11 @@ from aero_commons.mixins import LDAPSyncMixin
 class Department(models.Model):
     """
     Represents a department within the organization.
-    
+
     Attributes:
         name: Unique name of the department
     """
-    
+
     name = models.CharField(
         verbose_name="Department Name",
         max_length=100,
@@ -36,20 +34,20 @@ class Department(models.Model):
 class Position(models.Model):
     """
     Represents a position or role within a department.
-    
+
     Attributes:
         title_en: English title of the position (required, unique)
         title_fa: Persian/Farsi title of the position (optional)
         department: Foreign key to the related department
     """
-    
+
     title_en = models.CharField(
         verbose_name="Title (English)",
         max_length=100,
         unique=True,
         help_text="Enter the English title of this position",
     )
-    
+
     title_fa = models.CharField(
         verbose_name="Title (Farsi)",
         max_length=100,
@@ -57,7 +55,7 @@ class Position(models.Model):
         blank=True,
         help_text="Enter the Farsi/Persian title of this position",
     )
-    
+
     department = models.ForeignKey(
         Department,
         verbose_name="Department",
@@ -66,6 +64,11 @@ class Position(models.Model):
         on_delete=models.SET_NULL,
         related_name="positions",
         help_text="Select the department this position belongs to",
+    )
+
+    hidden = models.BooleanField(
+        default=False,
+        help_text="Show Position or not.",
     )
 
     def __str__(self):
@@ -80,11 +83,11 @@ class Position(models.Model):
 class CustomUserManager(TreeManager, UserManager):
     """
     A hybrid manager that combines MPTT Tree methods with Django Auth methods.
-    
+
     This manager enables both hierarchical queries (ancestors, descendants)
     and standard user authentication operations.
     """
-    
+
     def get_queryset(self):
         """
         Return a TreeQuerySet that supports both MPTT and standard operations.
@@ -96,6 +99,8 @@ class CustomUser(LDAPSyncMixin, AbstractUser, MPTTModel):
     """
     Custom user model extending Django's AbstractUser with MPTT support.
     """
+    first_name_fa = models.CharField(max_length=125, null=True, blank=True)
+    last_name_fa = models.CharField(max_length=125,  null=True, blank=True)
     
     # --------------------------
     # LDAP-related fields
@@ -107,13 +112,13 @@ class CustomUser(LDAPSyncMixin, AbstractUser, MPTTModel):
         unique=True,
         help_text="Unique identifier from LDAP server",
     )
-    
+
     use_ldap = models.BooleanField(
         verbose_name="Use LDAP",
         default=False,
         help_text="Indicates whether the user authenticates via LDAP",
     )
-    
+
     cn = models.CharField(
         verbose_name="Common Name",
         max_length=255,
@@ -121,7 +126,7 @@ class CustomUser(LDAPSyncMixin, AbstractUser, MPTTModel):
         blank=True,
         help_text="Common Name (CN) from LDAP",
     )
-    
+
     # --------------------------
     # Organizational fields
     # --------------------------
@@ -134,7 +139,7 @@ class CustomUser(LDAPSyncMixin, AbstractUser, MPTTModel):
         blank=True,
         help_text="Select the organizational position for this user",
     )
-    
+
     direct_manager = TreeForeignKey(
         "self",
         verbose_name="Direct Manager",
@@ -144,7 +149,7 @@ class CustomUser(LDAPSyncMixin, AbstractUser, MPTTModel):
         related_name="subordinates",
         help_text="Select the direct manager/supervisor for this user",
     )
-    
+
     # --------------------------
     # Profile fields (from UserInfo)
     # --------------------------
@@ -155,7 +160,7 @@ class CustomUser(LDAPSyncMixin, AbstractUser, MPTTModel):
         blank=True,
         help_text="Upload a profile picture",
     )
-    
+
     identify_code = models.CharField(
         verbose_name="Identification Code",
         max_length=10,
@@ -163,7 +168,7 @@ class CustomUser(LDAPSyncMixin, AbstractUser, MPTTModel):
         blank=True,
         help_text="Enter the national or organizational ID code",
     )
-    
+
     last_degree = models.CharField(
         verbose_name="Last Academic Degree",
         max_length=120,
@@ -171,14 +176,14 @@ class CustomUser(LDAPSyncMixin, AbstractUser, MPTTModel):
         blank=True,
         help_text="Enter the highest academic degree held by the user",
     )
-    
+
     address = models.TextField(
         verbose_name="Address",
         null=True,
         blank=True,
         help_text="Enter the full mailing address",
     )
-    
+
     phone = models.CharField(
         verbose_name="Phone Number",
         max_length=12,
@@ -186,14 +191,14 @@ class CustomUser(LDAPSyncMixin, AbstractUser, MPTTModel):
         blank=True,
         help_text="Enter the contact phone number",
     )
-    
+
     birth_date = models.DateField(
         verbose_name="Birth Date",
         null=True,
         blank=True,
         help_text="Enter the user's date of birth",
     )
-    
+
     personnel_code = models.CharField(
         verbose_name="Personnel Code",
         max_length=10,
@@ -210,6 +215,7 @@ class CustomUser(LDAPSyncMixin, AbstractUser, MPTTModel):
         """
         MPTT configuration for hierarchical structure.
         """
+
         parent_attr = "direct_manager"
         order_insertion_by = ["username"]
 
@@ -222,7 +228,7 @@ class CustomUser(LDAPSyncMixin, AbstractUser, MPTTModel):
         Override save method to:
         - Set an unusable password for LDAP-based users
         - Auto-generate corporate email if none provided
-        
+
         Args:
             *args: Variable length argument list
             **kwargs: Arbitrary keyword arguments
@@ -230,21 +236,17 @@ class CustomUser(LDAPSyncMixin, AbstractUser, MPTTModel):
         # LDAP users should not have usable passwords
         if self.use_ldap:
             self.set_unusable_password()
-        
+
         # Generate default email if not provided
         if not self.email:
-            email_domain = getattr(
-                settings, 
-                "CUSTOM_USERS_EMAIL_DOMAIN", 
-                "example.com"
-            )
+            email_domain = getattr(settings, "CUSTOM_USERS_EMAIL_DOMAIN", "example.com")
             self.email = f"{self.username}@{email_domain}"
-        
+
         super().save(*args, **kwargs)
 
     def __str__(self):
         return self.username
-    
+
     @property
     def full_name(self):
         """
@@ -253,7 +255,7 @@ class CustomUser(LDAPSyncMixin, AbstractUser, MPTTModel):
         """
         full = f"{self.first_name} {self.last_name}".strip()
         return full if full else self.username
-    
+
     @property
     def department(self):
         """
