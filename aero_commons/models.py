@@ -236,7 +236,8 @@ class CustomUser(LDAPSyncMixin, AbstractUser, MPTTModel):
         # LDAP users should not have usable passwords
         if self.use_ldap:
             self.set_unusable_password()
-
+        
+        self.username = self.username.lower()
         # Generate default email if not provided
         if not self.email:
             email_domain = getattr(settings, "CUSTOM_USERS_EMAIL_DOMAIN", "example.com")

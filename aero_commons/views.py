@@ -8,7 +8,12 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import OrderingFilter
 
 from .models import CustomUser, Department, Position
-from .serializers import CustomUserSerializer, PositionSerializer, DepartmentSerializer
+from .serializers import (
+    CustomUserSerializer,
+    PositionSerializer,
+    DepartmentSerializer,
+    UserBriefSerializer,
+)
 
 
 class CustomUserFilter(django_filters.FilterSet):
@@ -21,6 +26,9 @@ class CustomUserFilter(django_filters.FilterSet):
     username = django_filters.CharFilter(lookup_expr="icontains")
     first_name = django_filters.CharFilter(lookup_expr="icontains")
     last_name = django_filters.CharFilter(lookup_expr="icontains")
+    first_name_fa = django_filters.CharFilter(lookup_expr="icontains")
+    last_name_fa = django_filters.CharFilter(lookup_expr="icontains")
+
     email = django_filters.CharFilter(lookup_expr="icontains")
 
     # Organizational filters
@@ -51,6 +59,8 @@ class CustomUserFilter(django_filters.FilterSet):
         fields = [
             "username",
             "first_name",
+            "first_name_fa",
+            "last_name_fa",
             "last_name",
             "email",
             "position",
@@ -72,7 +82,10 @@ class UserListAPIView(generics.ListAPIView):
 
     serializer_class = CustomUserSerializer
     filterset_class = CustomUserFilter
-    filter_backends = [DjangoFilterBackend, OrderingFilter,]
+    filter_backends = [
+        DjangoFilterBackend,
+        OrderingFilter,
+    ]
 
     def get_queryset(self):
         """
@@ -83,6 +96,15 @@ class UserListAPIView(generics.ListAPIView):
         ).all()
 
 
+class MySubordinatesListView(generics.ListAPIView):
+    serializer_class = UserBriefSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = user.subordinates.all()
+        return queryset
+
+
 class UserMeView(generics.RetrieveAPIView):
     serializer_class = CustomUserSerializer
     queryset = CustomUser.objects.all()
@@ -90,10 +112,6 @@ class UserMeView(generics.RetrieveAPIView):
 
     def get_object(self):
         return self.request.user
-
-    def get_queryset(self):
-        query = CustomUser.objects.all()
-        return query
 
 
 class UserDetailAPIView(generics.RetrieveUpdateAPIView):
@@ -146,7 +164,11 @@ class DepartmentViewSet(ReadOnlyModelViewSet):
     queryset = Department.objects.all()
     filterset_class = DepartmentFilter
 
-    filter_backends = [DjangoFilterBackend, OrderingFilter,]
+    filter_backends = [
+        DjangoFilterBackend,
+        OrderingFilter,
+    ]
+
 
 class PositionFilter(django_filters.FilterSet):
     """
@@ -208,7 +230,10 @@ class PositionViewSet(ReadOnlyModelViewSet):
     serializer_class = PositionSerializer
     queryset = Position.objects.all()
     filterset_class = PositionFilter
-    filter_backends = [DjangoFilterBackend, OrderingFilter,]
+    filter_backends = [
+        DjangoFilterBackend,
+        OrderingFilter,
+    ]
 
 
 @extend_schema(

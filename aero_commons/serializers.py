@@ -2,24 +2,6 @@ from rest_framework import serializers
 from .models import CustomUser, Department, Position
 
 
-
-class UserBriefSerializer(serializers.ModelSerializer):
-    """
-    Brief information serializer for CustomUser.
-    Useful for selects, dropdowns, or smaller lists.
-    """
-
-    class Meta:
-        model = CustomUser
-        fields = [
-            "id",
-            "username",
-            "first_name",
-            "last_name",
-            "thumbnail",  
-        ]
-
-
 class ManagerSerializer(serializers.ModelSerializer):
     """
     Serializer for the UserInfo model.
@@ -34,7 +16,6 @@ class ManagerSerializer(serializers.ModelSerializer):
             "first_name",
             "last_name",
         )
-
 
 class CustomUserSerializer(serializers.ModelSerializer):
     """
@@ -55,7 +36,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
             "username",
             "email",
             "first_name",
-            "first_name_fa"
+            "first_name_fa",
             "last_name",
             "last_name_fa",
             "is_active",
@@ -82,6 +63,24 @@ class CustomUserSerializer(serializers.ModelSerializer):
             "username",
             "is_staff",
             "thumbnail",
+            "personnel_code",
+        ]
+
+
+class UserBriefSerializer(serializers.ModelSerializer):
+
+
+    class Meta:
+        model = CustomUser
+        fields = [
+            "id",
+            "email",
+            "username",
+            "first_name",
+            "first_name_fa",
+            "last_name",
+            "last_name_fa",
+            "position",
             "personnel_code",
         ]
 

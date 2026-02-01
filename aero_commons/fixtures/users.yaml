@@ -1,0 +1,278 @@
+
+
+
+# CEO - Top of the hierarchy (no manager)
+- model: commons.customuser
+  pk: 1
+  fields:
+    username: "ceo_user"
+    password: "pbkdf2_sha256$600000$test$hashedpassword123"  # Use make_password() for real passwords
+    email: "ceo@company.com"
+    first_name: "Ali"
+    last_name: "Ahmadi"
+    first_name_fa: "علی"
+    last_name_fa: "احمدی"
+    is_active: true
+    is_staff: true
+    is_superuser: true
+    date_joined: "2020-01-15 09:00:00+00:00"
+    ldap_id: null
+    use_ldap: false
+    cn: null
+    position: 8
+    direct_manager: null
+    thumbnail: null
+    identify_code: "0012345678"
+    last_degree: "MBA"
+    address: "Tehran, Iran"
+    phone: "09121234567"
+    birth_date: "1975-03-20"
+    personnel_code: "EMP001"
+    lft: 1
+    rght: 14
+    tree_id: 1
+    level: 0
+
+# Engineering Manager - Reports to CEO
+- model: commons.customuser
+  pk: 2
+  fields:
+    username: "eng_manager"
+    password: "pbkdf2_sha256$600000$test$hashedpassword123"
+    email: "eng.manager@company.com"
+    first_name: "Reza"
+    last_name: "Hosseini"
+    first_name_fa: "رضا"
+    last_name_fa: "حسینی"
+    is_active: true
+    is_staff: true
+    is_superuser: false
+    date_joined: "2021-03-10 09:00:00+00:00"
+    ldap_id: "550e8400-e29b-41d4-a716-446655440001"
+    use_ldap: true
+    cn: "Reza Hosseini"
+    position: 3
+    direct_manager: 1
+    thumbnail: null
+    identify_code: "0023456789"
+    last_degree: "M.Sc Computer Engineering"
+    address: "Isfahan, Iran"
+    phone: "09132345678"
+    birth_date: "1985-07-15"
+    personnel_code: "EMP002"
+    lft: 2
+    rght: 9
+    tree_id: 1
+    level: 1
+
+# Senior Software Engineer - Reports to Engineering Manager
+- model: commons.customuser
+  pk: 3
+  fields:
+    username: "senior_dev"
+    password: "pbkdf2_sha256$600000$test$hashedpassword123"
+    email: "senior.dev@company.com"
+    first_name: "Mohammad"
+    last_name: "Karimi"
+    first_name_fa: "محمد"
+    last_name_fa: "کریمی"
+    is_active: true
+    is_staff: false
+    is_superuser: false
+    date_joined: "2022-01-20 09:00:00+00:00"
+    ldap_id: "550e8400-e29b-41d4-a716-446655440002"
+    use_ldap: true
+    cn: "Mohammad Karimi"
+    position: 2
+    direct_manager: 2
+    thumbnail: null
+    identify_code: "0034567890"
+    last_degree: "B.Sc Software Engineering"
+    address: "Mashhad, Iran"
+    phone: "09153456789"
+    birth_date: "1990-11-25"
+    personnel_code: "EMP003"
+    lft: 3
+    rght: 6
+    tree_id: 1
+    level: 2
+
+# Junior Software Engineer - Reports to Senior Developer
+- model: commons.customuser
+  pk: 4
+  fields:
+    username: "junior_dev"
+    password: "pbkdf2_sha256$600000$test$hashedpassword123"
+    email: "junior.dev@company.com"
+    first_name: "Sara"
+    last_name: "Mohammadi"
+    first_name_fa: "سارا"
+    last_name_fa: "محمدی"
+    is_active: true
+    is_staff: false
+    is_superuser: false
+    date_joined: "2023-06-01 09:00:00+00:00"
+    ldap_id: null
+    use_ldap: false
+    cn: null
+    position: 1
+    direct_manager: 3
+    thumbnail: null
+    identify_code: "0045678901"
+    last_degree: "B.Sc Computer Science"
+    address: "Shiraz, Iran"
+    phone: "09174567890"
+    birth_date: "1998-04-10"
+    personnel_code: "EMP004"
+    lft: 4
+    rght: 5
+    tree_id: 1
+    level: 3
+
+# Another Software Engineer - Reports to Engineering Manager
+- model: commons.customuser
+  pk: 5
+  fields:
+    username: "dev_user"
+    password: "pbkdf2_sha256$600000$test$hashedpassword123"
+    email: "dev@company.com"
+    first_name: "Amir"
+    last_name: "Rezaei"
+    first_name_fa: "امیر"
+    last_name_fa: "رضایی"
+    is_active: true
+    is_staff: false
+    is_superuser: false
+    date_joined: "2022-09-15 09:00:00+00:00"
+    ldap_id: "550e8400-e29b-41d4-a716-446655440003"
+    use_ldap: true
+    cn: "Amir Rezaei"
+    position: 1
+    direct_manager: 2
+    thumbnail: null
+    identify_code: "0056789012"
+    last_degree: "M.Sc Information Technology"
+    address: "Tabriz, Iran"
+    phone: "09145678901"
+    birth_date: "1992-08-30"
+    personnel_code: "EMP005"
+    lft: 7
+    rght: 8
+    tree_id: 1
+    level: 2
+
+# HR Manager - Reports to CEO
+- model: commons.customuser
+  pk: 6
+  fields:
+    username: "hr_manager"
+    password: "pbkdf2_sha256$600000$test$hashedpassword123"
+    email: "hr.manager@company.com"
+    first_name: "Maryam"
+    last_name: "Tehrani"
+    first_name_fa: "مریم"
+    last_name_fa: "تهرانی"
+    is_active: true
+    is_staff: true
+    is_superuser: false
+    date_joined: "2021-05-20 09:00:00+00:00"
+    ldap_id: null
+    use_ldap: false
+    cn: null
+    position: 5
+    direct_manager: 1
+    thumbnail: null
+    identify_code: "0067890123"
+    last_degree: "MBA Human Resources"
+    address: "Tehran, Iran"
+    phone: "09126789012"
+    birth_date: "1988-12-05"
+    personnel_code: "EMP006"
+    lft: 10
+    rght: 13
+    tree_id: 1
+    level: 1
+
+# HR Specialist - Reports to HR Manager
+- model: commons.customuser
+  pk: 7
+  fields:
+    username: "hr_specialist"
+    password: "pbkdf2_sha256$600000$test$hashedpassword123"
+    email: "hr.specialist@company.com"
+    first_name: "Fatemeh"
+    last_name: "Sadeghi"
+    first_name_fa: "فاطمه"
+    last_name_fa: "صادقی"
+    is_active: true
+    is_staff: false
+    is_superuser: false
+    date_joined: "2023-02-10 09:00:00+00:00"
+    ldap_id: "550e8400-e29b-41d4-a716-446655440004"
+    use_ldap: true
+    cn: "Fatemeh Sadeghi"
+    position: 4
+    direct_manager: 6
+    thumbnail: null
+    identify_code: "0078901234"
+    last_degree: "B.Sc Psychology"
+    address: "Karaj, Iran"
+    phone: "09127890123"
+    birth_date: "1995-06-18"
+    personnel_code: "EMP007"
+    lft: 11
+    rght: 12
+    tree_id: 1
+    level: 2
+
+# Inactive user for testing
+- model: commons.customuser
+  pk: 8
+  fields:
+    username: "inactive_user"
+    password: "pbkdf2_sha256$600000$test$hashedpassword123"
+    email: "inactive@company.com"
+    first_name: "Hassan"
+    last_name: "Jafari"
+    first_name_fa: "حسن"
+    last_name_fa: "جعفری"
+    is_active: false
+    is_staff: false
+    is_superuser: false
+    date_joined: "2020-06-01 09:00:00+00:00"
+    ldap_id: null
+    use_ldap: false
+    cn: null
+    position: 1
+    direct_manager: null
+    thumbnail: null
+    identify_code: "0089012345"
+    last_degree: "B.Sc"
+    address: "Yazd, Iran"
+    phone: "09138901234"
+    birth_date: "1993-02-28"
+    personnel_code: "EMP008"
+    lft: 1
+    rght: 2
+    tree_id: 2
+    level: 0
+
+  
+
+# CEO (pk=1)
+
+# ├── Engineering Manager (pk=2)
+
+# │ ├── Senior Developer (pk=3)
+
+# │ │ └── Junior Developer (pk=4)
+
+# │ └── Developer (pk=5)
+
+# └── HR Manager (pk=6)
+
+# └── HR Specialist (pk=7)
+
+# [Separate Tree]
+
+# └── Inactive User (pk=8)

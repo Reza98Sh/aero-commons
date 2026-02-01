@@ -12,6 +12,7 @@ from .views import (
     PositionViewSet,
     DepartmentViewSet,
     UserMeView,
+    MySubordinatesListView,
     sync_from_ldap_view,
 )
 
@@ -25,7 +26,8 @@ urlpatterns = [
     path("token/refresh/", TokenRefreshView.as_view(), name="api-token-refresh"),
     path("", UserListAPIView.as_view(), name="user-list-full"),
     path("me/", UserMeView.as_view(), name="user-me"),
-    path("<int:pk>/", UserDetailAPIView.as_view(), name="user-list-full"),
+    path("my-subordinate/", MySubordinatesListView.as_view(), name="user-subordinates"),
+    path("<int:pk>/", UserDetailAPIView.as_view(), name="user-detail"),
     path("sync/", sync_from_ldap_view, name="ldap-sync"),
 ]
 

@@ -1,0 +1,71 @@
+- model: commons.position
+  pk: 1
+  fields:
+    title_en: "Software Engineer"
+    title_fa: "مهندس نرم‌افزار"
+    department: 1
+    hidden: false
+
+- model: commons.position
+  pk: 2
+  fields:
+    title_en: "Senior Software Engineer"
+    title_fa: "مهندس ارشد نرم‌افزار"
+    department: 1
+    hidden: false
+
+- model: commons.position
+  pk: 3
+  fields:
+    title_en: "Engineering Manager"
+    title_fa: "مدیر مهندسی"
+    department: 1
+    hidden: false
+
+- model: commons.position
+  pk: 4
+  fields:
+    title_en: "HR Specialist"
+    title_fa: "کارشناس منابع انسانی"
+    department: 2
+    hidden: false
+
+- model: commons.position
+  pk: 5
+  fields:
+    title_en: "HR Manager"
+    title_fa: "مدیر منابع انسانی"
+    department: 2
+    hidden: false
+
+- model: commons.position
+  pk: 6
+  fields:
+    title_en: "Financial Analyst"
+    title_fa: "تحلیل‌گر مالی"
+    department: 3
+    hidden: false
+
+- model: commons.position
+  pk: 7
+  fields:
+    title_en: "CFO"
+    title_fa: "مدیر مالی ارشد"
+    department: 3
+    hidden: false
+
+- model: commons.position
+  pk: 8
+  fields:
+    title_en: "CEO"
+    title_fa: "مدیرعامل"
+    department: null
+    hidden: false
+
+- model: commons.position
+  pk: 9
+  fields:
+    title_en: "Intern"
+    title_fa: "کارآموز"
+    department: 1
+    hidden: true

@@ -1,0 +1,25 @@
+
+- model: commons.department
+  pk: 1
+  fields:
+    name: "Engineering"
+
+- model: commons.department
+  pk: 2
+  fields:
+    name: "Human Resources"
+
+- model: commons.department
+  pk: 3
+  fields:
+    name: "Finance"
+
+- model: commons.department
+  pk: 4
+  fields:
+    name: "Marketing"
+
+- model: commons.department
+  pk: 5
+  fields:
+    name: "Operations"
