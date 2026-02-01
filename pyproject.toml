@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "aero-commons"
-version = "0.2.9"
+version = "0.2.10"
 description = "Reusable Django app for custom user management with LDAP support and common utilities for Aero organization."
 readme = "readme.md"
 license = {text = "MIT"}
@@ -27,5 +27,3 @@ dependencies = [
 ]
 
 
-[tool.setuptools.package-data]
-"*" = ["fixtures/*.yaml", "fixtures/*.yml", "fixtures/**/*.yaml", "fixtures/**/*.yml"]
