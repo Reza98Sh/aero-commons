@@ -63,6 +63,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
             "username",
             "is_staff",
             "thumbnail",
+            "ldap_id",
             "personnel_code",
         ]
 

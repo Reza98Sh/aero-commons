@@ -28,6 +28,7 @@ class CustomUserFilter(django_filters.FilterSet):
     last_name = django_filters.CharFilter(lookup_expr="icontains")
     first_name_fa = django_filters.CharFilter(lookup_expr="icontains")
     last_name_fa = django_filters.CharFilter(lookup_expr="icontains")
+    is_active = django_filters.BooleanFilter()
 
     email = django_filters.CharFilter(lookup_expr="icontains")
 
@@ -64,6 +65,7 @@ class CustomUserFilter(django_filters.FilterSet):
             "last_name",
             "email",
             "position",
+            "is_active",
             "position_title",
             "department",
             "department_name",
