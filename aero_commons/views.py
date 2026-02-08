@@ -1,11 +1,12 @@
 import django_filters
+
 from rest_framework.response import Response
-from rest_framework import permissions, status, generics
+from rest_framework.filters import OrderingFilter
 from rest_framework.viewsets import ReadOnlyModelViewSet
 from rest_framework.decorators import api_view, permission_classes
-from drf_spectacular.utils import extend_schema
+from rest_framework import permissions, status, generics, serializers
+from drf_spectacular.utils import extend_schema, inline_serializer
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.filters import OrderingFilter
 
 from .models import CustomUser, Department, Position
 from .serializers import (
@@ -94,7 +95,11 @@ class UserListAPIView(generics.ListAPIView):
         Return all users.
         """
         return CustomUser.objects.select_related(
-            "position", "position__department"
+            "position",                          # Position of current user
+            "position__department",              # Department of current user's position
+            "direct_manager",                    # Direct manager (self-referential)
+            "direct_manager__position",          # Position of direct manager
+            "direct_manager__position__department",  # Department of direct manager's position
         ).all()
 
 
@@ -237,9 +242,26 @@ class PositionViewSet(ReadOnlyModelViewSet):
         OrderingFilter,
     ]
 
-
 @extend_schema(
     request=None,
+    responses={
+        200: inline_serializer(
+            name='LDAPSyncSuccessResponse',
+            fields={
+                'status': serializers.CharField(),
+                'data': inline_serializer(
+                    name='LDAPSyncDataInline',
+                    fields={
+                        'created': serializers.IntegerField(),
+                        'updated': serializers.IntegerField(),
+                        'total': serializers.IntegerField(),
+                    }
+                ),
+            }
+        ),
+    },
+    summary="Sync users from LDAP",
+    description="Synchronizes user data from the LDAP server. Admin only.",
 )
 @api_view(["POST"])
 @permission_classes([permissions.IsAdminUser])
