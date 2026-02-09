@@ -10,8 +10,9 @@ class DepartmentAdmin(admin.ModelAdmin):
     """
     Admin interface for Department model.
     """
-    list_display = ['name']
-    search_fields = ['name']
+
+    list_display = ["name"]
+    search_fields = ["name"]
 
 
 @admin.register(Position)
@@ -19,9 +20,10 @@ class PositionAdmin(admin.ModelAdmin):
     """
     Admin interface for Position model.
     """
-    list_display = ['title_en', 'title_fa', 'department']
-    list_filter = ['department']
-    search_fields = ['title_en', 'title_fa']
+
+    list_display = ["title_en", "title_fa", "department"]
+    list_filter = ["department"]
+    search_fields = ["title_en", "title_fa"]
 
 
 @admin.register(CustomUser)
@@ -29,31 +31,62 @@ class CustomUserAdmin(DjangoMpttAdmin, UserAdmin):
     """
     Admin interface for CustomUser model with MPTT tree support.
     """
-    
+
     # List view configuration
-    list_display = ['username', 'email', 'first_name', 'last_name', 'position', 'is_active']
-    list_filter = ['is_staff', 'is_active', 'position__department']
-    search_fields = ['username', 'first_name', 'last_name', 'email']
-    ordering = ['username']
-    
+    list_display = [
+        "username",
+        "email",
+        "first_name",
+        "last_name",
+        "position",
+        "is_active",
+    ]
+    list_filter = ["is_staff", "is_active", "position__department"]
+    search_fields = ["username", "first_name", "last_name", "email"]
+    ordering = ["username"]
+
     # Form fieldsets
     fieldsets = (
-        (None, {'fields': ('username', 'password')}),
-        ('Personal Info', {'fields': ('first_name', 'last_name', 'email')}),
-        ('Organization', {'fields': ('position', 'direct_manager', 'use_ldap')}),
-        ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups')}),
+        (None, {"fields": ("username", "password")}),
+        (
+            "Personal Info",
+            {
+                "fields": (
+                    "first_name",
+                    "first_name_fa",
+                    "last_name",
+                    "last_name_fa",
+                    "email",
+                )
+            },
+        ),
+        ("Organization", {"fields": ("position", "direct_manager", "use_ldap")}),
+        (
+            "Permissions",
+            {"fields": ("is_active", "is_staff", "is_superuser", "groups")},
+        ),
     )
-    
+
     # Add user fieldsets
     add_fieldsets = (
-        (None, {
-            'classes': ('wide',),
-            'fields': ('username', 'password1', 'password2', 'email', 'position', 'is_active'),
-        }),
+        (
+            None,
+            {
+                "classes": ("wide",),
+                "fields": (
+                    "username",
+                    "password1",
+                    "password2",
+                    "email",
+                    "position",
+                    "is_active",
+                ),
+            },
+        ),
     )
-    
+
     # LDAP sync action
-    actions = ['sync_users_from_ldap']
+    actions = ["sync_users_from_ldap"]
 
     @admin.action(description="🔄 Sync users from LDAP")
     def sync_users_from_ldap(self, request, queryset):
@@ -63,5 +96,5 @@ class CustomUserAdmin(DjangoMpttAdmin, UserAdmin):
         result = CustomUser.sync_from_ldap(dry_run=False)
         messages.success(
             request,
-            f"LDAP Sync: Created {result['created']} | Updated {result['updated']} | Linked {result['linked']}"
+            f"LDAP Sync: Created {result['created']} | Updated {result['updated']} | Linked {result['linked']}",
         )

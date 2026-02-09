@@ -17,6 +17,7 @@ class ManagerSerializer(serializers.ModelSerializer):
             "last_name",
         )
 
+
 class CustomUserSerializer(serializers.ModelSerializer):
     """
     Main User Serializer.
@@ -61,6 +62,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
             "email",
             "phone",
             "username",
+            "is_active",
             "is_staff",
             "thumbnail",
             "ldap_id",
@@ -69,7 +71,6 @@ class CustomUserSerializer(serializers.ModelSerializer):
 
 
 class UserBriefSerializer(serializers.ModelSerializer):
-
 
     class Meta:
         model = CustomUser
@@ -95,6 +96,16 @@ class DepartmentSerializer(serializers.ModelSerializer):
 
 class PositionSerializer(serializers.ModelSerializer):
 
+    department_detail = DepartmentSerializer(source="department", read_only=True)
+
     class Meta:
         model = Position
-        fields = "__all__"
+        fields = [
+            "id",
+            "title_en",
+            "title_fa",
+            "hidden",
+            "department",
+            "department_detail",
+        ]
+        extra_kwargs = {"department": {"write_only": True}}

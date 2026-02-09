@@ -95,10 +95,10 @@ class UserListAPIView(generics.ListAPIView):
         Return all users.
         """
         return CustomUser.objects.select_related(
-            "position",                          # Position of current user
-            "position__department",              # Department of current user's position
-            "direct_manager",                    # Direct manager (self-referential)
-            "direct_manager__position",          # Position of direct manager
+            "position",  # Position of current user
+            "position__department",  # Department of current user's position
+            "direct_manager",  # Direct manager (self-referential)
+            "direct_manager__position",  # Position of direct manager
             "direct_manager__position__department",  # Department of direct manager's position
         ).all()
 
@@ -242,22 +242,27 @@ class PositionViewSet(ReadOnlyModelViewSet):
         OrderingFilter,
     ]
 
+    def get_queryset(self):
+        # Filter positions that have at least one active user
+        return Position.objects.filter(users__is_active=True).distinct()
+
+
 @extend_schema(
     request=None,
     responses={
         200: inline_serializer(
-            name='LDAPSyncSuccessResponse',
+            name="LDAPSyncSuccessResponse",
             fields={
-                'status': serializers.CharField(),
-                'data': inline_serializer(
-                    name='LDAPSyncDataInline',
+                "status": serializers.CharField(),
+                "data": inline_serializer(
+                    name="LDAPSyncDataInline",
                     fields={
-                        'created': serializers.IntegerField(),
-                        'updated': serializers.IntegerField(),
-                        'total': serializers.IntegerField(),
-                    }
+                        "created": serializers.IntegerField(),
+                        "updated": serializers.IntegerField(),
+                        "total": serializers.IntegerField(),
+                    },
                 ),
-            }
+            },
         ),
     },
     summary="Sync users from LDAP",

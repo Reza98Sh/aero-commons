@@ -99,9 +99,10 @@ class CustomUser(LDAPSyncMixin, AbstractUser, MPTTModel):
     """
     Custom user model extending Django's AbstractUser with MPTT support.
     """
+
     first_name_fa = models.CharField(max_length=125, null=True, blank=True)
-    last_name_fa = models.CharField(max_length=125,  null=True, blank=True)
-    
+    last_name_fa = models.CharField(max_length=125, null=True, blank=True)
+
     # --------------------------
     # LDAP-related fields
     # --------------------------
@@ -223,6 +224,7 @@ class CustomUser(LDAPSyncMixin, AbstractUser, MPTTModel):
         verbose_name = "User"
         verbose_name_plural = "Users"
 
+
     def save(self, *args, **kwargs):
         """
         Override save method to:
@@ -236,7 +238,7 @@ class CustomUser(LDAPSyncMixin, AbstractUser, MPTTModel):
         # LDAP users should not have usable passwords
         if self.use_ldap:
             self.set_unusable_password()
-        
+
         self.username = self.username.lower()
         # Generate default email if not provided
         if not self.email:
