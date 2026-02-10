@@ -14,7 +14,9 @@ class ManagerSerializer(serializers.ModelSerializer):
             "username",
             "email",
             "first_name",
+            "first_name_fa",
             "last_name",
+            "last_name_fa",
         )
 
 
