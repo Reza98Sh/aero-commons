@@ -271,9 +271,27 @@ class LDAPSyncMixin:
             # -------------------------
             # Create or update user
             # -------------------------
+
+            # Build base defaults (fields that always update)
+            update_defaults = {
+                k: v
+                for k, v in record["user_data"].items()
+                if k not in ("first_name", "last_name")
+            }
+
+            # Fields only set on creation, never updated
+            create_only_fields = {
+                "first_name": record["user_data"].get("first_name", ""),
+                "last_name": record["user_data"].get("last_name", ""),
+            }
+
             user, created = CustomUser.objects.update_or_create(
                 ldap_id=record["ldap_id"],
-                defaults=record["user_data"],
+                defaults=update_defaults,
+                create_defaults={
+                    **update_defaults,
+                    **create_only_fields,
+                },  # merged for new records
             )
 
             # -------------------------

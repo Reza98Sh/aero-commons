@@ -45,45 +45,6 @@ class CustomUserAdmin(DjangoMpttAdmin, UserAdmin):
     search_fields = ["username", "first_name", "last_name", "email"]
     ordering = ["username"]
 
-    # Form fieldsets
-    fieldsets = (
-        (None, {"fields": ("username", "password")}),
-        (
-            "Personal Info",
-            {
-                "fields": (
-                    "first_name",
-                    "first_name_fa",
-                    "last_name",
-                    "last_name_fa",
-                    "email",
-                )
-            },
-        ),
-        ("Organization", {"fields": ("position", "direct_manager", "use_ldap")}),
-        (
-            "Permissions",
-            {"fields": ("is_active", "is_staff", "is_superuser", "groups")},
-        ),
-    )
-
-    # Add user fieldsets
-    add_fieldsets = (
-        (
-            None,
-            {
-                "classes": ("wide",),
-                "fields": (
-                    "username",
-                    "password1",
-                    "password2",
-                    "email",
-                    "position",
-                    "is_active",
-                ),
-            },
-        ),
-    )
 
     # LDAP sync action
     actions = ["sync_users_from_ldap"]
