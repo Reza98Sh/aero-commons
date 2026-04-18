@@ -1,7 +1,7 @@
 import django_filters
 
 from rest_framework.response import Response
-from rest_framework.filters import OrderingFilter
+from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.viewsets import ReadOnlyModelViewSet
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework import permissions, status, generics, serializers
@@ -88,7 +88,19 @@ class UserListAPIView(generics.ListAPIView):
     filter_backends = [
         DjangoFilterBackend,
         OrderingFilter,
+        SearchFilter,
     ]
+    
+    search_fields = [
+        "username",
+        "first_name",
+        "last_name",
+        "first_name_fa",
+        "last_name_fa",
+        "email",
+        "personnel_code",
+        ]
+        
 
     def get_queryset(self):
         """
