@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "aero-commons"
-version = "0.2.16"
+version = "0.2.18"
 description = "Reusable Django app for custom user management with LDAP support and common utilities for Aero organization."
 readme = "readme.md"
 license = {text = "MIT"}
@@ -18,7 +18,6 @@ dependencies = [
     "django<6.0",
     "django-filter<=25.2",
     "django-mptt<=0.18.0",
-    "django-mptt-admin<=2.9.0",
     "djangorestframework<=3.16.1",
     "djangorestframework-simplejwt[crypto]<=5.5.1",
     "ldap3<=2.9.1",

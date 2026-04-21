@@ -1,6 +1,5 @@
 from django.contrib import admin, messages
 from django.contrib.auth.admin import UserAdmin
-from django_mptt_admin.admin import DjangoMpttAdmin
 
 from .models import Department, Position, CustomUser
 
@@ -27,7 +26,7 @@ class PositionAdmin(admin.ModelAdmin):
 
 
 @admin.register(CustomUser)
-class CustomUserAdmin(DjangoMpttAdmin, UserAdmin):
+class CustomUserAdmin(UserAdmin):
     """
     Admin interface for CustomUser model with MPTT tree support.
     """
@@ -107,5 +106,5 @@ class CustomUserAdmin(DjangoMpttAdmin, UserAdmin):
         result = CustomUser.sync_from_ldap(dry_run=False)
         messages.success(
             request,
-            f"LDAP Sync: Created {result['created']} | Updated {result['updated']} | Linked {result['linked']}",
+            f"LDAP Sync: Created {result['created']} | Updated {result['updated']}",
         )
