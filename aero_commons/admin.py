@@ -45,6 +45,56 @@ class CustomUserAdmin(DjangoMpttAdmin, UserAdmin):
     search_fields = ["username", "first_name", "last_name", "email"]
     ordering = ["username"]
 
+    fieldsets = (
+        (None, {"fields": ("username", "password")}),
+        (
+            "Personal info",
+            {
+                "fields": (
+                    "first_name",
+                    "last_name",
+                    "first_name_fa",
+                    "last_name_fa",
+                    "email",
+                    "thumbnail",
+                    "birth_date",
+                )
+            },
+        ),
+        (
+            "Organizational info",
+            {
+                "fields": (
+                    "position",
+                    "direct_manager",
+                    "personnel_code",
+                    "identify_code",
+                    "last_degree",
+                )
+            },
+        ),
+        (
+            "Contact info",
+            {"fields": ("phone", "address")},
+        ),
+        (
+            "LDAP info",
+            {"fields": ("use_ldap", "ldap_id", "cn")},
+        ),
+        (
+            "Permissions",
+            {
+                "fields": (
+                    "is_active",
+                    "is_staff",
+                    "is_superuser",
+                    "groups",
+                    "user_permissions",
+                )
+            },
+        ),
+        ("Important dates", {"fields": ("last_login", "date_joined")}),
+    )
 
     # LDAP sync action
     actions = ["sync_users_from_ldap"]
