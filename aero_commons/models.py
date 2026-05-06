@@ -21,6 +21,13 @@ class Department(models.Model):
         unique=True,
         help_text="Enter the unique name of the department",
     )
+    name_fa = models.CharField(
+        verbose_name="Department Name",
+        max_length=100,
+        null=True,
+        blank=True,
+        help_text="Enter the unique farsi name of the department",
+    )
 
     def __str__(self):
         return self.name
@@ -223,7 +230,11 @@ class CustomUser(LDAPSyncMixin, AbstractUser, MPTTModel):
     class Meta:
         verbose_name = "User"
         verbose_name_plural = "Users"
-
+        indexes = [
+            models.Index(
+                fields=["position", "is_active"], name="idx_user_position_active"
+            ),
+        ]
 
     def save(self, *args, **kwargs):
         """
