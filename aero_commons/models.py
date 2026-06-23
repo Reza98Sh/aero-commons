@@ -6,7 +6,6 @@ from mptt.managers import TreeManager
 
 from aero_commons.mixins import LDAPSyncMixin
 
-
 class Department(models.Model):
     """
     Represents a department within the organization.
@@ -235,6 +234,9 @@ class CustomUser(LDAPSyncMixin, AbstractUser, MPTTModel):
                 fields=["position", "is_active"], name="idx_user_position_active"
             ),
         ]
+
+        abstract = settings.AUTH_USER_MODEL != 'commons.CustomUser'
+   
 
     def save(self, *args, **kwargs):
         """
