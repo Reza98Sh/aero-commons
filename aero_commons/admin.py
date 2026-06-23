@@ -1,9 +1,11 @@
 from django.contrib import admin, messages
 from django.contrib.auth.admin import UserAdmin
 
-from .models import Department, Position, CustomUser
+from .models import Department, Position
 
+from django.contrib.auth import get_user_model
 
+User = get_user_model()
 @admin.register(Department)
 class DepartmentAdmin(admin.ModelAdmin):
     """
@@ -25,8 +27,8 @@ class PositionAdmin(admin.ModelAdmin):
     search_fields = ["title_en", "title_fa"]
 
 
-@admin.register(CustomUser)
-class CustomUserAdmin(UserAdmin):
+@admin.register(User)
+class CustomUserAdmin( UserAdmin):
     """
     Admin interface for CustomUser model with MPTT tree support.
     """
@@ -103,7 +105,7 @@ class CustomUserAdmin(UserAdmin):
         """
         Execute LDAP sync from Django Admin.
         """
-        result = CustomUser.sync_from_ldap(dry_run=False)
+        result = User.sync_from_ldap(dry_run=False)
         messages.success(
             request,
             f"LDAP Sync: Created {result['created']} | Updated {result['updated']}",

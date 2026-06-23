@@ -1,6 +1,9 @@
 from rest_framework import serializers
-from .models import CustomUser, Department, Position
+from .models import  Department, Position
 
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 class ManagerSerializer(serializers.ModelSerializer):
     """
@@ -8,7 +11,7 @@ class ManagerSerializer(serializers.ModelSerializer):
     """
 
     class Meta:
-        model = CustomUser
+        model = User
         fields = (
             "id",
             "username",
@@ -59,7 +62,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
                 self.fields.pop("permissions", None)
 
     class Meta:
-        model = CustomUser
+        model = User
         fields = [
             "id",
             "username",
@@ -111,7 +114,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
 class UserBriefSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = CustomUser
+        model = User
         fields = [
             "id",
             "email",

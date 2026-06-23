@@ -8,18 +8,20 @@ from rest_framework import permissions, status, generics, serializers
 from drf_spectacular.utils import extend_schema, inline_serializer
 from django_filters.rest_framework import DjangoFilterBackend
 
-from .models import CustomUser, Department, Position
+from .models import  Department, Position
 from .serializers import (
     CustomUserSerializer,
     PositionSerializer,
     DepartmentSerializer,
     UserBriefSerializer,
 )
+from django.contrib.auth import get_user_model
 
+User = get_user_model()
 
 class CustomUserFilter(django_filters.FilterSet):
     """
-    Filter class for CustomUser model.
+    Filter class for User model.
     Supports filtering by various user attributes including hierarchical relationships.
     """
 
@@ -57,7 +59,7 @@ class CustomUserFilter(django_filters.FilterSet):
     phone = django_filters.CharFilter(lookup_expr="icontains")
 
     class Meta:
-        model = CustomUser
+        model = User
         fields = [
             "username",
             "first_name",
@@ -106,7 +108,7 @@ class UserListAPIView(generics.ListAPIView):
         """
         Return all users.
         """
-        return CustomUser.objects.select_related(
+        return User.objects.select_related(
             "position",  # Position of current user
             "position__department",  # Department of current user's position
             "direct_manager",  # Direct manager (self-referential)
@@ -126,7 +128,7 @@ class MySubordinatesListView(generics.ListAPIView):
 
 class UserMeView(generics.RetrieveAPIView):
     serializer_class = CustomUserSerializer
-    queryset = CustomUser.objects.all()
+    queryset = User.objects.all()
     permission_classes = [permissions.IsAuthenticated]
 
     def get_object(self):
@@ -139,7 +141,7 @@ class UserDetailAPIView(generics.RetrieveUpdateAPIView):
     """
 
     serializer_class = CustomUserSerializer
-    queryset = CustomUser.objects.all()
+    queryset = User.objects.all()
 
 
 class DepartmentFilter(django_filters.FilterSet):
@@ -286,7 +288,7 @@ def sync_from_ldap_view(request):
     try:
 
         # Execute LDAP synchronization
-        result = CustomUser.sync_from_ldap()
+        result = User.sync_from_ldap()
 
         return Response(
             {

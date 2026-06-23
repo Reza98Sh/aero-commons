@@ -3,9 +3,9 @@
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase, APIClient
+from django.contrib.auth import get_user_model
 
-from aero_commons.models import CustomUser
-
+User = get_user_model()
 
 class BaseAPITestCase(APITestCase):
     """
@@ -19,14 +19,14 @@ class BaseAPITestCase(APITestCase):
         """
         self.client = APIClient()
 
-        self.ceo = CustomUser.objects.get(pk=1)
-        self.eng_manager = CustomUser.objects.get(pk=2)
-        self.senior_dev = CustomUser.objects.get(pk=3)
-        self.junior_dev = CustomUser.objects.get(pk=4)
-        self.dev_user = CustomUser.objects.get(pk=5)
-        self.hr_manager = CustomUser.objects.get(pk=6)
-        self.hr_specialist = CustomUser.objects.get(pk=7)
-        self.inactive_user = CustomUser.objects.get(pk=8)
+        self.ceo = User.objects.get(pk=1)
+        self.eng_manager = User.objects.get(pk=2) # superuser
+        self.senior_dev = User.objects.get(pk=3)
+        self.junior_dev = User.objects.get(pk=4)
+        self.dev_user = User.objects.get(pk=5)
+        self.hr_manager = User.objects.get(pk=6)
+        self.hr_specialist = User.objects.get(pk=7)
+        self.inactive_user = User.objects.get(pk=8)
 
 
 # -------------------------------------------------------------------
