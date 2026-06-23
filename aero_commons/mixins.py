@@ -236,8 +236,12 @@ class LDAPSyncMixin:
         Since UserInfo is merged into CustomUser, all fields are written
         directly to the CustomUser model.
         """
-        from aero_commons.models import CustomUser, Department, Position
+        from aero_commons.models import  Department, Position
 
+        from django.contrib.auth import get_user_model
+
+        CustomUser = get_user_model()
+        
         if dry_run:
             return None
 
@@ -383,8 +387,11 @@ class LDAPSyncMixin:
         Link users to their direct managers based on LDAP manager DN.
         Handles circular references and self-references gracefully.
         """
-        from aero_commons.models import CustomUser
         from mptt.exceptions import InvalidMove
+
+        from django.contrib.auth import get_user_model
+
+        CustomUser = get_user_model()
 
         if dry_run:
             return
