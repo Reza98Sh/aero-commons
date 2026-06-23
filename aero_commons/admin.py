@@ -46,7 +46,7 @@ class CustomUserAdmin( UserAdmin):
     search_fields = ["username", "first_name", "last_name", "email"]
     ordering = ["username"]
 
-    fieldsets = (
+    fieldsets = [
         (None, {"fields": ("username", "password")}),
         (
             "Personal info",
@@ -95,7 +95,7 @@ class CustomUserAdmin( UserAdmin):
             },
         ),
         ("Important dates", {"fields": ("last_login", "date_joined")}),
-    )
+    ]
 
     # LDAP sync action
     actions = ["sync_users_from_ldap"]
