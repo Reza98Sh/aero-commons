@@ -15,7 +15,7 @@ authors = [
 ]
 
 dependencies = [
-    "django<6.0",
+    "django<7.0",
     "django-filter<=25.2",
     "django-mptt<=0.18.0",
     "djangorestframework<=3.16.1",
