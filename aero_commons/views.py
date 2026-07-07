@@ -92,6 +92,7 @@ class UserListAPIView(generics.ListAPIView):
         OrderingFilter,
         SearchFilter,
     ]
+    queryset = User.objects.all()
     
     search_fields = [
         "username",
@@ -105,16 +106,9 @@ class UserListAPIView(generics.ListAPIView):
         
 
     def get_queryset(self):
-        """
-        Return all users.
-        """
-        return User.objects.select_related(
-            "position",  # Position of current user
-            "position__department",  # Department of current user's position
-            "direct_manager",  # Direct manager (self-referential)
-            "direct_manager__position",  # Position of direct manager
-            "direct_manager__position__department",  # Department of direct manager's position
-        ).all()
+        queryset = super().get_queryset()
+        queryset = CustomUserSerializer.annotate_queryset(queryset)
+        return queryset
 
 
 class MySubordinatesListView(generics.ListAPIView):
@@ -132,7 +126,11 @@ class UserMeView(generics.RetrieveAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_object(self):
-        return self.request.user
+        # Get the user and apply annotations
+        user_id = self.request.user.id
+        queryset = User.objects.filter(id=user_id)
+        queryset = CustomUserSerializer.annotate_queryset(queryset)
+        return queryset.get()
 
 
 class UserDetailAPIView(generics.RetrieveUpdateAPIView):

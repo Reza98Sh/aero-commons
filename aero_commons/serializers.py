@@ -1,6 +1,8 @@
 from rest_framework import serializers
-from .models import  Department, Position
+from django.db.models import  Exists, OuterRef
 
+
+from .models import  Department, Position
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -23,7 +25,6 @@ class ManagerSerializer(serializers.ModelSerializer):
         )
 
 
-from rest_framework import serializers
 
 
 class CustomUserSerializer(serializers.ModelSerializer):
@@ -39,6 +40,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
 
     groups = serializers.SerializerMethodField()
     permissions = serializers.SerializerMethodField()
+    is_manager = serializers.BooleanField(read_only=True)
 
     direct_manager = ManagerSerializer(read_only=True)
 
@@ -76,6 +78,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
             "ldap_id",
             "groups",
             "permissions",
+            "is_manager",
             # Organization Info
             "cn",
             "direct_manager",
@@ -98,6 +101,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
             "is_active",
             "is_staff",
             "thumbnail",
+            "is_manager",
             "ldap_id",
             "personnel_code",
         ]
@@ -109,6 +113,24 @@ class CustomUserSerializer(serializers.ModelSerializer):
     def get_permissions(self, obj):
         # Returns standard Django permissions, e.g., ['auth.add_user', 'app.change_model']
         return list(obj.get_all_permissions())
+
+    @staticmethod
+    def annotate_queryset(queryset):
+        
+        queryset.select_related(
+            "position",  # Position of current user
+            "position__department",  # Department of current user's position
+            "direct_manager",  # Direct manager (self-referential)
+            "direct_manager__position",  # Position of direct manager
+            "direct_manager__position__department",  # Department of direct manager's position
+        ).all()
+        
+        # Annotate is_manager as True if the user has any subordinates
+        subordinates = User.objects.filter(direct_manager=OuterRef("pk"))
+        queryset = queryset.annotate(is_manager=Exists(subordinates))
+        
+        
+        return queryset
 
 
 class UserBriefSerializer(serializers.ModelSerializer):

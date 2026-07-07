@@ -126,6 +126,61 @@ class UserListAPITest(BaseAPITestCase):
         self.assertEqual(usernames, sorted(usernames))
 
 
+    def test_is_manager_true_in_user_list(self):
+        """Users with subordinates must have is_manager=True in the list endpoint."""
+        self.client.force_authenticate(user=self.ceo)
+        response = self.client.get(reverse("user-list-full"))
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        # Map username -> is_manager for quick lookup
+        manager_map = {u["username"]: u["is_manager"] for u in response.data}
+        
+        self.assertTrue(manager_map["ceo_user"])
+        self.assertTrue(manager_map["eng_manager"])
+        self.assertTrue(manager_map["senior_dev"])
+        self.assertTrue(manager_map["hr_manager"])
+
+    def test_is_manager_false_in_user_list(self):
+        """Leaf nodes must have is_manager=False in the list endpoint."""
+        self.client.force_authenticate(user=self.ceo)
+        response = self.client.get(reverse("user-list-full"))
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        manager_map = {u["username"]: u["is_manager"] for u in response.data}
+        
+        self.assertFalse(manager_map["junior_dev"])
+        self.assertFalse(manager_map["dev_user"])
+        self.assertFalse(manager_map["hr_specialist"])
+        self.assertFalse(manager_map["inactive_user"])
+        
+        
+        
+    def test_is_manager_is_boolean_in_list(self):
+        """is_manager value must be a Python bool in list endpoint."""
+        self.client.force_authenticate(user=self.ceo)
+        response = self.client.get(reverse("user-list-full"))
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        for user_data in response.data:
+            self.assertIsInstance(
+                user_data["is_manager"],
+                bool,
+                msg=f"is_manager for {user_data['username']} is not bool",
+            )
+
+    def test_is_manager_field_present_in_list(self):
+        """is_manager must always be present in list response."""
+        self.client.force_authenticate(user=self.ceo)
+        response = self.client.get(reverse("user-list-full"))
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        for user_data in response.data:
+            self.assertIn("is_manager", user_data)
+            
 # -------------------------------------------------------------------
 # User Me API Tests
 # -------------------------------------------------------------------
@@ -172,6 +227,67 @@ class UserMeAPITest(BaseAPITestCase):
             response.data["direct_manager"]["username"],
             "eng_manager",
         )
+        
+
+    def test_ceo_is_manager_via_me(self):
+        """CEO has subordinates, so is_manager must be True."""
+        self.client.force_authenticate(user=self.ceo)
+        response = self.client.get(reverse("user-me"))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data["is_manager"])
+
+
+
+    def test_junior_dev_is_not_manager_via_me(self):
+        """Junior Dev is a leaf node, so is_manager must be False."""
+        self.client.force_authenticate(user=self.junior_dev)
+        response = self.client.get(reverse("user-me"))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertFalse(response.data["is_manager"])
+
+    def test_is_manager_field_present_in_me(self):
+        """is_manager must always be present in /me response."""
+        self.client.force_authenticate(user=self.junior_dev)
+        response = self.client.get(reverse("user-me"))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("is_manager", response.data)
+
+
+    def test_is_manager_updates_when_subordinate_added(self):
+        """
+        After assigning a subordinate to a previously leaf-node user,
+        is_manager must flip to True.
+        """
+        # junior_dev has no subordinates initially
+        self.client.force_authenticate(user=self.junior_dev)
+        response = self.client.get(reverse("user-me"))
+        self.assertFalse(response.data["is_manager"])
+
+        # Assign inactive_user under junior_dev
+        self.inactive_user.direct_manager = self.junior_dev
+        self.inactive_user.save()
+
+        response = self.client.get(reverse("user-me"))
+        self.assertTrue(response.data["is_manager"])
+
+    def test_is_manager_updates_when_last_subordinate_removed(self):
+        """
+        After removing the only subordinate, is_manager must flip to False.
+        """
+        # senior_dev manages junior_dev
+        self.client.force_authenticate(user=self.senior_dev)
+        response = self.client.get(reverse("user-me"))
+        self.assertTrue(response.data["is_manager"])
+
+        # Remove junior_dev from senior_dev's subordinates
+        self.junior_dev.direct_manager = None
+        self.junior_dev.save()
+
+        response = self.client.get(reverse("user-me"))
+        self.assertFalse(response.data["is_manager"])
 
 
 # -------------------------------------------------------------------
