@@ -39,29 +39,11 @@ class CustomUserSerializer(serializers.ModelSerializer):
     )
 
     groups = serializers.SerializerMethodField()
-    permissions = serializers.SerializerMethodField()
     is_manager = serializers.BooleanField(read_only=True)
 
     direct_manager = ManagerSerializer(read_only=True)
 
-    def __init__(self, *args, **kwargs):
-        # Initialize the superclass
-        super().__init__(*args, **kwargs)
 
-        # Get the request object from the context
-        request = self.context.get("request")
-
-        # Check if the request exists and has query_params
-        if request and hasattr(request, "query_params"):
-            # Check the value of 'include_permission' query parameter
-            include_permission = (
-                request.query_params.get("include_permission", "false").lower()
-                == "true"
-            )
-
-            # Remove the 'permissions' field if include_permission is not True
-            if not include_permission:
-                self.fields.pop("permissions", None)
 
     class Meta:
         model = User
@@ -77,7 +59,6 @@ class CustomUserSerializer(serializers.ModelSerializer):
             "is_staff",
             "ldap_id",
             "groups",
-            "permissions",
             "is_manager",
             # Organization Info
             "cn",
@@ -110,14 +91,12 @@ class CustomUserSerializer(serializers.ModelSerializer):
         # Returns a list of group names, e.g., ['Admin', 'Editors']
         return list(obj.groups.values_list("name", flat=True))
 
-    def get_permissions(self, obj):
-        # Returns standard Django permissions, e.g., ['auth.add_user', 'app.change_model']
-        return list(obj.get_all_permissions())
+
 
     @staticmethod
     def annotate_queryset(queryset):
         
-        queryset.select_related(
+        queryset = queryset.select_related(
             "position",  # Position of current user
             "position__department",  # Department of current user's position
             "direct_manager",  # Direct manager (self-referential)
